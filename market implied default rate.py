@@ -38,4 +38,5 @@ for index in df.index[1:]:
     df.loc[index,'Principal'] = df.loc[index,'Default'] - df.loc[index,'Loss']
     df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
     df.loc[index,'Discount'] = 1/np.power(1+RFR/Freq,df.loc[index,'Period'])
+    df.loc[index,'Asset'] = 1/np.power(1+AssetFunding/Freq,df.loc[index,'Period'])
     

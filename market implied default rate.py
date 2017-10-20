@@ -3,7 +3,6 @@ import numpy as np
 # Given
 PeriodMax = 19
 PeriodStop = 5
-
 Coupon = 0.316754
 Freq = 1
 CDR = 0.383306890946272

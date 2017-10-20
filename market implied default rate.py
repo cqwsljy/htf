@@ -19,12 +19,13 @@ CumLoss = 0
 CheckCumSev = 0
 columns = ['Period','Balance','Interest','Principal',
 'Default','Loss','CashFlow','Discount','AssetCashFlow',
-'Asset','AssetDiscounting']
+'AssetDiscounting']
 
 
 PeriodMax = 19
+PeriodStop = 5
 
-df = pd.DataFrame(np.zeros((PeriodMax,11)),columns=columns)
+df = pd.DataFrame(np.zeros((PeriodMax,len(columns))),columns=columns)
 df['Period'] = range(0,PeriodMax)
 
 
@@ -39,10 +40,15 @@ for index in df.index[1:]:
     df.loc[index,'Principal'] = df.loc[index,'Default'] - df.loc[index,'Loss']
     df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
     df.loc[index,'Discount'] = 1/np.power(1+RFR/Freq,df.loc[index,'Period'])
-    df.loc[index,'Asset'] = 1/np.power(1+AssetFunding/Freq,df.loc[index,'Period'])
-    df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Default']
     df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
-
+    df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
+    if index == PeriodStop:
+        df.loc[index,'Principal'] = df.loc[index-1,'Balance'] - df.loc[index,'Loss']
+        df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
+        df.loc[index,'Discount'] = 1/np.power(1+RFR/Freq,df.loc[index,'Period'])
+        df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
+        df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
+        break
 
 Price = sum(df.loc[:,'CashFlow']*df.loc[:,'Discount'])/df.loc[0,'Balance']*100
 CumDefault = sum(df.loc[:,'Default'])/df.loc[0,'Balance']
@@ -51,4 +57,4 @@ df.loc[index,"AssetCashFlow"] = df.loc[0,'Balance']*((1 - CumDefault) +AssetSev*
 
 CumLoss = sum(df.loc[:,'Loss'])/df.loc[0,'Balance']
 CheckCumSev = CumLoss/CumDefault
-AssetPrice = sum(df.loc[:,'AssetCashFlow']*df.loc[:,'Asset'])/df.loc[0,'Balance']*100
+AssetPrice = sum(df.loc[:,'AssetCashFlow']*df.loc[:,'AssetDiscounting'])/df.loc[0,'Balance']*100

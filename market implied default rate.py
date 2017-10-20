@@ -48,9 +48,7 @@ for index in df.index[1:]:
 
 Price = sum(df.loc[:,'CashFlow']*df.loc[:,'Discount'])/df.loc[0,'Balance']*100
 CumDefault = sum(df.loc[:,'Default'])/df.loc[0,'Balance']
-
 df.loc[index,"AssetCashFlow"] = df.loc[0,'Balance']*((1 - CumDefault) +AssetSev*(1-AssetSev)*CumDefault)
-
 CumLoss = sum(df.loc[:,'Loss'])/df.loc[0,'Balance']
 CheckCumSev = CumLoss/CumDefault
 AssetPrice = sum(df.loc[:,'AssetCashFlow']*df.loc[:,'AssetDiscounting'])/df.loc[0,'Balance']*100

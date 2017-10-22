@@ -1,5 +1,19 @@
 import pandas as pd
 import numpy as np
+
+def getCashflow(upb,rate,cdr,sev):
+    smm = 1 - np.power(1-cdr,1/Freq)
+    inte = upb * rate/Freq
+    defa = upb * smm
+    loss = defa * sev
+    prin = defa - loss
+    bal = upb - prin - defa
+    cashflow = inte + prin
+    return  [bal,inte,defa,prin,cashflow,loss]
+
+def getDiscount(timeV,rfr,freq):
+    return 1/np.power(1+rfr/freq,timeV)
+
 # Given
 PeriodMax = 19
 PeriodStop = 5
@@ -23,18 +37,7 @@ columns = ['Period','Balance','Interest','Principal',
 'Default','Loss','CashFlow','Discount','AssetCashFlow',
 'AssetDiscounting']
 
-def getCashflow(upb,rate,cdr,sev):
-    smm = 1 - np.power(1-cdr,1/Freq)
-    inte = upb * rate/Freq
-    defa = upb * smm
-    loss = defa * sev
-    prin = defa - loss
-    bal = upb - prin - defa
-    cashflow = inte + prin
-    return  [bal,inte,defa,prin,cashflow,loss]
 
-def getDiscount(timeV,rfr,freq):
-    return 1/np.power(1+rfr/freq,timeV)
 
 # initial
 df = pd.DataFrame(np.zeros((PeriodMax,len(columns))),columns=columns)

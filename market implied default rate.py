@@ -37,8 +37,6 @@ columns = ['Period','Balance','Interest','Principal',
 'Default','Loss','CashFlow','Discount','AssetCashFlow',
 'AssetDiscounting']
 
-
-
 # initial
 df = pd.DataFrame(np.zeros((PeriodMax,len(columns))),columns=columns)
 df['Period'] = range(0,PeriodMax)

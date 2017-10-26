@@ -15,6 +15,16 @@ def getDiscount(timeV,rfr,freq):
     return 1/np.power(1+rfr/freq,timeV)
 '''
 def getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodMax=19):
+    '''
+    upb : initial balance
+    rate : coupon
+    cdr : constant d
+    sev :
+    rfr :
+    freq :
+    PeriodMax : 
+    '''
+    SMM = 1 - np.power(1-cdr,1/freq)
     # initial
     df = pd.DataFrame(np.zeros((PeriodMax,len(columns))),columns=columns)
     df['Period'] = range(0,PeriodMax)
@@ -22,34 +32,35 @@ def getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodMax=19):
     df['Discount'] = getDiscount(range(0,PeriodMax),rfr,freq)
     df.loc[0,'AssetDiscounting'] = 1 
 
-    SMM = 1 - np.power(1-cdr,1/freq)
-    df.loc[index,'Interest'] = df.loc[index-1,'Balance'] * Coupon / freq
-    df.loc[index,'Default'] = df.loc[index-1,'Balance'] * SMM
-    df.loc[index,'Loss'] = df.loc[index,'Default'] * sev
-    df.loc[index,'Principal'] = df.loc[index,'Default'] - df.loc[index,'Loss']
-    df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
-    df.loc[index,'Discount'] = 1/np.power(1+rfr/freq,df.loc[index,'Period'])
-    df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
-    df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
-    if index == PeriodStop:
-        df.loc[index,'Principal'] = df.loc[index-1,'Balance'] - df.loc[index,'Loss']
+    for index in df.index[1:]:
+        df.loc[index,'Interest'] = df.loc[index-1,'Balance'] * rate / freq
+        df.loc[index,'Default'] = df.loc[index-1,'Balance'] * SMM
+        df.loc[index,'Loss'] = df.loc[index,'Default'] * sev
+        df.loc[index,'Principal'] = df.loc[index,'Default'] - df.loc[index,'Loss']
         df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
         df.loc[index,'Discount'] = 1/np.power(1+rfr/freq,df.loc[index,'Period'])
         df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
         df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
-        break
+        if index == PeriodStop:
+            df.loc[index,'Principal'] = df.loc[index-1,'Balance'] - df.loc[index,'Loss']
+            df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
+            df.loc[index,'Discount'] = 1/np.power(1+rfr/freq,df.loc[index,'Period'])
+            df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
+            df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
+            break
     Price = sum(df.loc[:,'CashFlow']*df.loc[:,'Discount'])/df.loc[0,'Balance']*100
     CumDefault = sum(df.loc[:,'Default'])/df.loc[0,'Balance']
     df.loc[index,"AssetCashFlow"] = df.loc[0,'Balance']*((1 - CumDefault) +AssetSev*(1-AssetSev)*CumDefault)
     CumLoss = sum(df.loc[:,'Loss'])/df.loc[0,'Balance']
     CheckCumSev = CumLoss/CumDefault
     AssetPrice = sum(df.loc[:,'AssetCashFlow']*df.loc[:,'AssetDiscounting'])/df.loc[0,'Balance']*100
-    return df
+    return [df,Price,CheckCumSev,AssetPrice]
 
 def getDiscount(timeV,rfr,freq):
     return 1/np.power(1+rfr/freq,timeV) #timeV could be a vector or a scalar
 
 # Given
+upb = 1000000
 PeriodMax = 19
 PeriodStop = 5
 Coupon = 0.316754
@@ -71,6 +82,12 @@ CheckCumSev = 0
 columns = ['Period','Balance','Interest','Principal',
 'Default','Loss','CashFlow','Discount','AssetCashFlow',
 'AssetDiscounting']
+
+
+#getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodMax=19)
+[df,Price,CheckCumSev,AssetPrice] = getCashflow(upb,Coupon,CDR,SEV,Freq,PeriodMax)
+  
+
 
 
 '''
@@ -116,4 +133,3 @@ CheckCumSev = CumLoss/CumDefault
 AssetPrice = sum(df.loc[:,'AssetCashFlow']*df.loc[:,'AssetDiscounting'])/df.loc[0,'Balance']*100
 
 '''
-

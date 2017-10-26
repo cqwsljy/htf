@@ -61,9 +61,9 @@ def getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodStop,PeriodMax=19):
 def getDiscount(timeV,rfr,freq):
     return 1/np.power(1+rfr/freq,timeV) #timeV could be a vector or a scalar
 
-def getCdr(price,df):
+def getCdr(df):
     
-    return (df.loc[:,'Default']/upb).values
+    return (df.loc[1:,'Default'].values/df.loc[0:df.index[-2],'Balance'].values)
 
 # Given
 upb = 1000000
@@ -94,7 +94,8 @@ columns = ['Period','Balance','Interest','Principal',
 #getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodStop,PeriodMax=19)
 [df,Price,CumDefault,CheckCumSev,AssetPrice] = getCashflow(upb,Coupon,CDR,SEV,RFR,Freq,PeriodStop,PeriodMax)
   
-
+CDR = getCdr(df)
+CDR = CDR[0]
 
 
 '''

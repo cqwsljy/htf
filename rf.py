@@ -64,9 +64,9 @@ mnist = input_data.read_data_sets('D:/Download/MNIST')
 
 traindata,trainlable = loadtarget(mnist.train.images,mnist.train.labels)
 
-clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
-clf.fit(traindata,trainlable)
-index = [409,346,350]
+#clf = RandomForestClassifier(n_estimators=10, max_depth=None,min_samples_split=2, random_state=0)
+#clf.fit(traindata,trainlable)
+#index = [409,346,350]
 
 
 
@@ -96,11 +96,12 @@ plot_embedding_3d(X_lda,y_test,"LDA 3D (time %.2fs)" %(time() - t0))
 
 # MDS
 print("Computing MDS embedding")
-clf = manifold.MDS(n_components=2, n_init=1, max_iter=100)
+clf = manifold.MDS(n_components=3, n_init=1, max_iter=100)
 t0 = time()
 X_mds = clf.fit_transform(X_test)
 print("Done. Stress: %f" % clf.stress_)
 plot_embedding_2d(X_mds,y_test,"MDS (time %.2fs)" %(time() - t0))
+plot_embedding_3d(X_mds,y_test,"MDS (time %.2fs)" %(time() - t0))
 
 
 lable = trainlable

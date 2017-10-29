@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+from scipy.optimize import fsolve
+import warnings
+warnings.filterwarnings("ignore")
 '''
 def getCashflow(upb,rate,cdr,sev):
     smm = 1 - np.power(1-cdr,1/Freq)
@@ -14,6 +17,35 @@ def getCashflow(upb,rate,cdr,sev):
 def getDiscount(timeV,rfr,freq):
     return 1/np.power(1+rfr/freq,timeV)
 '''
+def cashDvideUpb(cdr,*args):
+    '''
+    args must be tuple (upb,rate,sev,rfr,freq,PeriodStop)
+    '''
+    upb,rate,sev,rfr,freq,PeriodStop = args
+    Interest = [0]
+    Balance = [upb]
+    Default = [0]
+    Loss = [0]
+    Principal = [0]
+    CashFlow = [0]
+    Discount = 1/np.power(1+rfr/freq,range(0,PeriodStop+1))
+    #print(Discount)
+    SMM = 1 - np.power(1-cdr,1/freq)
+    for i in range(1,PeriodStop+1):
+        Interest.append(Balance[i-1]*rate/freq)
+        Default.append(Balance[i-1] * SMM)
+        Loss.append(Default[i] * sev)
+        Principal.append(Default[i] - Loss[i])
+        CashFlow.append(Interest[i] + Principal[i]) 
+        Balance.append(Balance[i-1] - Principal[i] - Loss[i])
+        if i == PeriodStop:
+            Principal[i] = Balance[i-1] - Loss[i]
+            CashFlow[i] = Interest[i] + Principal[i]
+            Balance[i] = Balance[i-1] - Principal[i] - Loss[i] 
+    CashFlow = np.array(CashFlow)
+    Discount = np.array(Discount)
+    return sum(CashFlow * Discount)/upb*100 - 100
+
 def getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodStop,PeriodMax=19):
     '''
     upb : initial balance
@@ -38,15 +70,12 @@ def getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodStop,PeriodMax=19):
         df.loc[index,'Loss'] = df.loc[index,'Default'] * sev
         df.loc[index,'Principal'] = df.loc[index,'Default'] - df.loc[index,'Loss']
         df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
-        df.loc[index,'Discount'] = 1/np.power(1+rfr/freq,df.loc[index,'Period'])
         df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
         df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
-        print([index,PeriodStop])
         
         if index == PeriodStop:
             df.loc[index,'Principal'] = df.loc[index-1,'Balance'] - df.loc[index,'Loss']
             df.loc[index,'CashFlow'] = df.loc[index,'Interest'] + df.loc[index,'Principal']
-            df.loc[index,'Discount'] = 1/np.power(1+rfr/freq,df.loc[index,'Period'])
             df.loc[index,'AssetDiscounting'] = 1/np.power(1+AssetFunding,index)
             df.loc[index,'Balance'] = df.loc[index-1,'Balance'] - df.loc[index,'Principal'] - df.loc[index,'Loss']
             break
@@ -71,7 +100,8 @@ PeriodMax = 19
 PeriodStop = 5
 Coupon = 0.316754
 Freq = 1
-CDR = 0.383306890946272
+#CDR = 0.383306890946272
+
 RFR = 0.0293 #risk free rate
 
 # Assumption
@@ -79,7 +109,6 @@ SEV = 0.75
 AssetFunding = 0.05
 AssetSev = 0.85
 #Need to compute
-SMM = 1 - np.power(1-CDR,1/Freq)
 AssetPrice = 0
 Price = 0
 CumDefault = 0
@@ -89,6 +118,11 @@ CheckCumSev = 0
 columns = ['Period','Balance','Interest','Principal',
 'Default','Loss','CashFlow','Discount','AssetCashFlow',
 'AssetDiscounting']
+
+
+##calculate CDR
+args = (upb,Coupon,SEV,RFR,Freq,PeriodStop)
+CDR = fsolve(cashDvideUpb,[0.3],args=args)[0]
 
 
 #getCashflow(upb,rate,cdr,sev,rfr,freq,PeriodStop,PeriodMax=19)
